@@ -8,7 +8,7 @@ This is a web-based maze game built with HTML, CSS, and vanilla JavaScript. It f
 
 This project was created as a fun gift for a friend whose favorite toy is named Pink Kitty. <a href="https://joefromdenver.github.io/Pink-Kitty-Game/" target="_blank" rel="noopener noreferrer">Play it here</a>
 
-*This game was vibe coded with love using <a href="https://gemini.google.com/canvas)" target="_blank" rel="noopener noreferrer">Gemini 2.5 Pro with Canvas</a>*
+*This game was vibe coded with love using <a href="https://gemini.google.com/canvas" target="_blank" rel="noopener noreferrer">Gemini 2.5 Pro with Canvas</a>*
 
 ## Features
 
