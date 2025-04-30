@@ -38,7 +38,7 @@ This project was created as a fun gift for a friend whose favorite toy is named 
 
 This game is deployed using GitHub Pages. You can play it online at:
 
-[https://joefromdenver.github.io/Pink-Kitty-Game/](https://joefromdenver.github.io/Pink-Kitty-Game/)
+<a href="https://joefromdenver.github.io/Pink-Kitty-Game/" target="_blank" rel="noopener noreferrer">joefromdenver.github.io/Pink-Kitty-Game/</a>
 
 ## License
 
