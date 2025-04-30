@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pink Kitty Maze</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="theme-color" content="#fdd5ea">
+
+    <style>
+        /* General Styles & Vaporwave Theme */
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(135deg, #fdd5ea, #b0d2f2); /* Lighter Pink to Baby Blue */
+            color: #f8f0fc;
+            margin: 0;
+            padding: 5px; /* Reduced body padding */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden; /* Prevent scrollbars */
+            text-shadow: 1px 1px #6b5f80; /* Softer shadow */
+            /* Prevent pull-to-refresh and other touch actions on the body */
+            touch-action: none;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* Standard syntax */
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .container {
+            background-color: rgba(80, 70, 110, 0.85); /* Slightly lighter, still purpleish */
+            border: 3px solid #f7b2e1; /* Softer, brighter pink border */
+            box-shadow: 0 0 10px #f7b2e1, 0 0 20px #f7b2e1 inset;
+            padding: 15px; /* Reduced container padding */
+            border-radius: 12px; /* More rounded */
+            text-align: center;
+            width: 90%;
+            max-width: 550px; /* Slightly smaller max-width for start/end */
+            margin-bottom: 10px; /* Reduced margin */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #game-screen-container {
+            width: 98vw; /* More screen width */
+            height: 98vh; /* More screen height */
+            max-width: 1200px;
+            max-height: 900px;
+            padding: 10px; /* Reduced padding for game screen */
+            justify-content: space-around; /* Better space distribution */
+            /* Prevent default touch actions on the container */
+            touch-action: none;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 1.7em; /* Slightly smaller */
+            margin-bottom: 10px;
+            text-shadow: 2px 2px #8ba5c0;
+        }
+         h2 {
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        p {
+            font-size: 0.8em; /* Slightly smaller */
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        button {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #e6dff0; /* Very light lavender */
+            color: #594c73;
+            border: 2px solid;
+            border-color: #f5f0fa #c0b8d0 #c0b8d0 #f5f0fa;
+            padding: 8px 12px; /* Smaller padding */
+            margin: 6px 4px;    /* Smaller margin */
+            cursor: pointer;
+            font-size: 0.75em;
+            text-shadow: none;
+            box-shadow: 1px 1px 0px #8c82a3;
+            border-radius: 4px;
+            transition: all 0.1s ease;
+        }
+
+        button:active {
+            border-color: #c0b8d0 #f5f0fa #f5f0fa #c0b8d0;
+            box-shadow: inset 1px 1px 0px #8c82a3;
+            transform: translate(1px, 1px);
+        }
+
+        button:hover {
+            background-color: #f0eaf5;
+            box-shadow: 1px 1px 3px #f7b2e1;
+        }
+
+        #game-info {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 8px; /* Reduced margin */
+            font-size: 0.7em;
+            flex-shrink: 0;
+        }
+
+        #maze-canvas {
+            border: 2px solid #ccebff; /* Lighter blue border */
+            /* Floor color set in JS */
+            box-shadow: 0 0 6px #ccebff; /* Softer glow for canvas border */
+            display: block;
+            background-color: #d6eaff; /* Set explicit background for canvas element */
+            /* touch-action: none; /* Moved to container */
+        }
+
+        #mobile-controls {
+            margin-top: 10px; /* Reduced margin */
+            display: grid;
+            grid-template-columns: repeat(3, 45px); /* Standardized size */
+            grid-template-rows: repeat(2, 45px);
+            gap: 6px; /* Reduced gap */
+            width: auto;
+            max-width: 147px; /* Calculated: (45px * 3 + 6px * 2) */
+            flex-shrink: 0;
+            justify-content: center;
+        }
+
+        #mobile-controls button {
+            font-size: 1.1em;
+            padding: 0;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f7b2e1;
+            color: #594c73;
+            border-color: #fdeaf5 #e09dc8 #e09dc8 #fdeaf5;
+            text-shadow: none;
+            border-radius: 5px;
+        }
+        #mobile-controls button:active {
+             border-color: #e09dc8 #fdeaf5 #fdeaf5 #e09dc8;
+        }
+        /* SVG Arrows for consistency */
+        .arrow-svg { width: 60%; height: 60%; fill: #594c73; }
+
+
+        .up-arrow { grid-column: 2 / 3; grid-row: 1 / 2; }
+        .left-arrow { grid-column: 1 / 2; grid-row: 2 / 3; }
+        .down-arrow { grid-column: 2 / 3; grid-row: 2 / 3; }
+        .right-arrow { grid-column: 3 / 4; grid-row: 2 / 3; }
+
+        /* Container for end screen pets */
+        .pet-container {
+            display: flex;
+            justify-content: center; /* Center items horizontally */
+            align-items: center; /* Align items vertically */
+            gap: 20px; /* Add space between pets */
+            width: 100%; /* Take full width of parent */
+            margin: 8px auto; /* Keep original margin */
+        }
+
+        .kitten-face, .puppy-face { /* Apply size to both */
+            width: 75px;
+            height: 75px;
+            /* Remove individual margins */
+        }
+        /* House SVG Styles (End Screen) */
+        .house-icon-svg {
+            width: 65px;
+            height: 65px;
+            margin: 6px auto;
+        }
+        .house-icon-svg .house-body { fill: #FFFFFF; } /* White body */
+        .house-icon-svg .house-roof { fill: #2F4F4F; } /* Dark Slate Blue roof */
+        .house-icon-svg .house-door { fill: #2F4F4F; } /* Dark Slate Blue door */
+        .house-icon-svg .house-window { fill: #ADD8E6; stroke: #2F4F4F; stroke-width: 1.5; } /* Light blue window, dark border */
+
+
+        @media (max-width: 600px) {
+            body { padding: 3px; }
+            .container { padding: 12px; width: 96%; }
+            #game-screen-container { padding: 8px; width: 100%; }
+            h1 { font-size: 1.4em; }
+            p { font-size: 0.75em; }
+            button { font-size: 0.7em; padding: 7px 10px; }
+            #game-info { font-size: 0.65em; }
+
+            #mobile-controls {
+                grid-template-columns: repeat(3, 42px);
+                grid-template-rows: repeat(2, 42px);
+                gap: 5px;
+             }
+            #mobile-controls button { width: 42px; height: 42px; font-size: 1em; }
+            .kitten-face, .puppy-face { width: 65px; height: 65px; } /* Adjust size */
+            .pet-container { gap: 15px; }
+        }
+         @media (max-width: 400px) {
+            h1 { font-size: 1.2em; }
+            .kitten-face, .puppy-face { width: 55px; height: 55px; } /* Adjust size */
+            .house-icon-svg { width: 45px; height: 45px; }
+            #mobile-controls {
+                grid-template-columns: repeat(3, 38px);
+                grid-template-rows: repeat(2, 38px);
+                gap: 4px;
+            }
+            #mobile-controls button { width: 38px; height: 38px; font-size: 0.9em;}
+            .pet-container { gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="start-screen" class="container">
+        <h1>Pink Kitty Maze</h1>
+        <svg class="kitten-face" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <radialGradient id="eyeGradientKawaii" cx="50%" cy="50%" r="50%" fx="35%" fy="35%">
+                    <stop offset="0%" style="stop-color:white"/>
+                    <stop offset="30%" style="stop-color:#f8f8f8"/>
+                    <stop offset="100%" style="stop-color:#e0e0e0"/>
+                </radialGradient>
+            </defs>
+            <circle cx="50" cy="58" r="38" fill="#FFE4F1"/>
+            <path d="M20 45 L35 15 L50 40 Z" fill="#d0d0d0"/>
+            <path d="M80 45 L65 15 L50 40 Z" fill="#d0d0d0"/>
+            <path d="M25 42 L35 25 L45 38 Z" fill="#f7c5d8"/>
+            <path d="M75 42 L65 25 L55 38 Z" fill="#f7c5d8"/>
+            <ellipse cx="33" cy="55" rx="13" ry="16" fill="url(#eyeGradientKawaii)"/>
+            <ellipse cx="67" cy="55" rx="13" ry="16" fill="url(#eyeGradientKawaii)"/>
+            <circle cx="36" cy="58" r="6" fill="#4a3f60"/>
+            <circle cx="64" cy="58" r="6" fill="#4a3f60"/>
+            <circle cx="33" cy="53" r="2.5" fill="white"/>
+            <circle cx="67" cy="53" r="2.5" fill="white"/>
+            <circle cx="39" cy="61" r="1.5" fill="rgba(255,255,255,0.7)"/>
+            <circle cx="61" cy="61" r="1.5" fill="rgba(255,255,255,0.7)"/>
+            <path d="M42 72 Q50 69 58 72" stroke="#6b5f80" stroke-width="2" fill="transparent" stroke-linecap="round"/>
+            <path d="M48 65 Q50 67 52 65" fill="#f7b2e1" stroke="#e09dc8" stroke-width="1"/>
+            <ellipse cx="28" cy="65" rx="8" ry="5" fill="#f7c5d8" opacity="0.6"/>
+            <ellipse cx="72" cy="65" rx="8" ry="5" fill="#f7c5d8" opacity="0.6"/>
+        </svg>
+        <p>Oh no! This little kitty is lost and wants to go home. Help them get there!</p>
+        <div>
+            <button id="easy-btn">Easy</button>
+            <button id="medium-btn">Medium</button>
+            <button id="hard-btn">Hard</button>
+        </div>
+    </div>
+
+    <div id="game-screen-container" class="container hidden">
+        <div id="game-info">
+            <div id="current-score">Score: 0</div>
+            <div id="current-difficulty">Difficulty: Easy</div>
+        </div>
+        <canvas id="maze-canvas"></canvas>
+        <div id="mobile-controls">
+            <button class="up-arrow" id="up-btn"><svg class="arrow-svg" viewBox="0 0 24 24"><path d="M12 8l-6 6h12z"/></svg></button>
+            <button class="left-arrow" id="left-btn"><svg class="arrow-svg" viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg></button>
+            <button class="down-arrow" id="down-btn"><svg class="arrow-svg" viewBox="0 0 24 24"><path d="M12 16l6-6H6z"/></svg></button>
+            <button class="right-arrow" id="right-btn"><svg class="arrow-svg" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+        </div>
+    </div>
+
+    <div id="end-screen" class="container hidden">
+        <h2 id="end-message">Kitty is Home!</h2>
+        <div class="pet-container">
+            <svg class="kitten-face" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                 <defs>
+                    <radialGradient id="eyeGradientKawaiiEnd" cx="50%" cy="50%" r="50%" fx="35%" fy="35%">
+                        <stop offset="0%" style="stop-color:white"/>
+                        <stop offset="30%" style="stop-color:#f8f8f8"/>
+                        <stop offset="100%" style="stop-color:#e0e0e0"/>
+                    </radialGradient>
+                </defs>
+                <circle cx="50" cy="58" r="38" fill="#FFE4F1"/>
+                <path d="M20 45 L35 15 L50 40 Z" fill="#d0d0d0"/>
+                <path d="M80 45 L65 15 L50 40 Z" fill="#d0d0d0"/>
+                <path d="M25 42 L35 25 L45 38 Z" fill="#f7c5d8"/>
+                <path d="M75 42 L65 25 L55 38 Z" fill="#f7c5d8"/>
+                <ellipse cx="33" cy="55" rx="13" ry="16" fill="url(#eyeGradientKawaiiEnd)"/>
+                <ellipse cx="67" cy="55" rx="13" ry="16" fill="url(#eyeGradientKawaiiEnd)"/>
+                <circle cx="36" cy="58" r="6" fill="#4a3f60"/>
+                <circle cx="64" cy="58" r="6" fill="#4a3f60"/>
+                <circle cx="33" cy="53" r="2.5" fill="white"/>
+                <circle cx="67" cy="53" r="2.5" fill="white"/>
+                <circle cx="39" cy="61" r="1.5" fill="rgba(255,255,255,0.7)"/>
+                <circle cx="61" cy="61" r="1.5" fill="rgba(255,255,255,0.7)"/>
+                <path d="M38 70 Q50 78 62 70" stroke="#6b5f80" stroke-width="2.5" fill="transparent" stroke-linecap="round"/>
+                <path d="M48 65 Q50 67 52 65" fill="#f7b2e1" stroke="#e09dc8" stroke-width="1"/>
+                <ellipse cx="28" cy="65" rx="8" ry="5" fill="#f7c5d8" opacity="0.6"/>
+                <ellipse cx="72" cy="65" rx="8" ry="5" fill="#f7c5d8" opacity="0.6"/>
+            </svg>
+            <svg class="puppy-face" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="eyeGradientPuppy" cx="50%" cy="50%" r="50%" fx="35%" fy="35%">
+                        <stop offset="0%" style="stop-color:white"/>
+                        <stop offset="30%" style="stop-color:#f8f8f8"/>
+                        <stop offset="100%" style="stop-color:#e0e0e0"/>
+                    </radialGradient>
+                </defs>
+                <circle cx="50" cy="55" r="38" fill="#FFFFFF"/> <path d="M 20 60 Q 15 30, 50 20 Q 85 30, 80 60 Q 90 85, 50 88 Q 10 85, 20 60 Z" fill="#DEB887"/> <ellipse cx="25" cy="40" rx="14" ry="22" fill="#A0522D" transform="rotate(-30 25 40)"/> <ellipse cx="75" cy="40" rx="14" ry="22" fill="#A0522D" transform="rotate(30 75 40)"/> <ellipse cx="38" cy="52" rx="9" ry="11" fill="url(#eyeGradientPuppy)"/>
+                <ellipse cx="62" cy="52" rx="9" ry="11" fill="url(#eyeGradientPuppy)"/>
+                <circle cx="40" cy="54" r="4.5" fill="#4a3f60"/> <circle cx="60" cy="54" r="4.5" fill="#4a3f60"/> <circle cx="38" cy="50" r="1.8" fill="white"/> <circle cx="62" cy="50" r="1.8" fill="white"/> <ellipse cx="50" cy="68" rx="9" ry="7" fill="#4a3f60"/>
+                <path d="M42 78 Q50 83 58 78" stroke="#4a3f60" stroke-width="2" fill="transparent" stroke-linecap="round"/>
+                <path d="M48 79 Q50 85 52 79" fill="#FF6347" stroke="none"/> </svg>
+        </div>
+        <svg class="house-icon-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect class="house-body" x="15" y="40" width="70" height="50" rx="5"/>
+            <path class="house-roof" d="M10 45 L50 10 L90 45 Z"/>
+            <rect class="house-door" x="42" y="60" width="16" height="30" rx="3"/>
+            <circle class="house-window" cx="30" cy="55" r="7"/>
+            <circle class="house-window" cx="70" cy="55" r="7"/>
+        </svg>
+        <p id="final-maze-score">Maze Score: 0</p>
+        <p id="cumulative-session-score">Total Session Score: 0</p>
+        <p id="play-again-text">Rescue Pink Kitty again?</p>
+        <div>
+            <button id="easy-btn-end">Easy</button>
+            <button id="medium-btn-end">Medium</button>
+            <button id="hard-btn-end">Hard</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Constants & State ---
+        const GameState = { START_SCREEN: 'start_screen', PLAYING: 'playing', END_SCREEN: 'end_screen' };
+        let currentGameState = GameState.START_SCREEN;
+        const MAZE_FLOOR_COLOR = '#d6eaff';
+        const MAZE_WALL_COLOR = '#adc9e0';
+        const MAZE_WALL_GLOW = '#e0f7fa';
+
+        // House Colors (Consistent)
+        const HOUSE_BODY_COLOR = '#FFFFFF';
+        const HOUSE_ROOF_COLOR = '#2F4F4F';
+        const HOUSE_DOOR_COLOR = '#2F4F4F';
+        const HOUSE_WINDOW_COLOR = '#ADD8E6';
+        const HOUSE_WINDOW_STROKE_COLOR = '#2F4F4F';
+
+        // Kitty Colors for Canvas
+        const KITTY_HEAD_COLOR = '#FFE4F1'; // Very light pink for head
+        const KITTY_BODY_COLOR = KITTY_HEAD_COLOR; // Use same pink for body
+        const KITTY_EAR_COLOR = KITTY_HEAD_COLOR;  // Use same pink for outer ears
+        const KITTY_NOSE_COLOR = '#f7b2e1'; // Pink for nose
+        const KITTY_OUTLINE_COLOR = '#6b5f80'; // Dark grey outline
+        const KITTY_OUTLINE_OFFSET = 1; // Pixel offset for the background outline shape (head/body/house)
+        const KITTY_OUTLINE_THICKNESS = 2; // Adjusted thickness for ear/roof stroke
+        const KITTY_EYE_WHITE_COLOR = '#FFFFFF';
+        const KITTY_EYE_PUPIL_COLOR = '#4a3f60'; // Dark pupil
+
+        // Celebration Animation Constants
+        const CELEBRATION_DURATION = 2.0; // Seconds
+        const CELEBRATION_HOP_AMPLITUDE = 0.2; // Fraction of kitty size
+        const CELEBRATION_HOP_FREQUENCY = Math.PI * 4; // Speed of hops
+
+        // Hop Animation Constants
+        const HOP_DURATION = 0.3; // Seconds (quicker hop)
+        const HOP_AMPLITUDE = 0.15; // Fraction of kitty size (smaller hop)
+        const HOP_FREQUENCY = Math.PI * (2 / HOP_DURATION); // Ensure one full hop cycle
+
+        // Touch Control Constants
+        const MIN_SWIPE_DISTANCE = 30; // Minimum pixels to register as a swipe
+
+        const Difficulty = {
+            EASY: { name: 'Easy', size: 10, bonus: 10, treats: 5 },
+            MEDIUM: { name: 'Medium', size: 15, bonus: 20, treats: 10 },
+            HARD: { name: 'Hard', size: 20, bonus: 30, treats: 15 }
+        };
+        let currentDifficulty = Difficulty.EASY;
+
+        let maze = [];
+        let player = { x: 0, y: 0, visualX: 0, visualY: 0, isMoving: false, targetX: 0, targetY: 0, moveProgress: 0 };
+        let home = { x: 0, y: 0 };
+        let treats = [];
+        let currentMazeScore = 0;
+        let cumulativeSessionScore = 0;
+        let lastFrameTime = 0;
+        // Animation States
+        let isCelebrating = false;
+        let celebrationStartTime = 0;
+        let isHopping = false;
+        let hopStartTime = 0;
+        // Touch State
+        let touchStartX = null;
+        let touchStartY = null;
+
+
+        // --- DOM Elements ---
+        const startScreenDiv = document.getElementById('start-screen');
+        const gameScreenContainer = document.getElementById('game-screen-container');
+        const endScreenDiv = document.getElementById('end-screen');
+        const mazeCanvas = document.getElementById('maze-canvas');
+        const ctx = mazeCanvas.getContext('2d');
+        const scoreDisplay = document.getElementById('current-score');
+        const difficultyDisplay = document.getElementById('current-difficulty');
+        const finalMazeScoreDisplay = document.getElementById('final-maze-score');
+        const cumulativeScoreDisplay = document.getElementById('cumulative-session-score');
+        const endMessageDisplay = document.getElementById('end-message');
+        const mobileControlsDiv = document.getElementById('mobile-controls');
+        const playAgainText = document.getElementById('play-again-text');
+
+
+        // --- Sound Synthesis (Tone.js) ---
+        let mainSynth, kickSynth, treatMelodySynth;
+        async function initAudio() {
+            // ... (Audio initialization code remains the same) ...
+             if (!Tone.context.state || Tone.context.state !== 'running') { await Tone.start(); console.log("Audio Context Started."); } if (!mainSynth) { mainSynth = new Tone.FMSynth({ harmonicity: 1.5, modulationIndex: 6, envelope: { attack: 0.005, decay: 0.1, sustain: 0.005, release: 0.08 }, modulationEnvelope: { attack: 0.005, decay: 0.1, sustain: 0.005, release: 0.08 } }).toDestination(); } if (!kickSynth) { kickSynth = new Tone.MembraneSynth({ pitchDecay: 0.015, octaves: 4, envelope: { attack: 0.001, decay: 0.25, sustain: 0.005, release: 0.15 } }).toDestination(); } if (!treatMelodySynth) { treatMelodySynth = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.02, release: 0.15 } }).toDestination(); }
+        }
+
+        const sounds = {
+            // ... (Sound playback functions remain the same) ...
+             gameStart: () => { if (kickSynth && Tone.context.state === 'running') kickSynth.triggerAttackRelease("D2", "8n", Tone.now()); if (mainSynth && Tone.context.state === 'running') mainSynth.triggerAttackRelease("A4", "8n", Tone.now() + 0.08); }, treatCollect: () => { if (treatMelodySynth && Tone.context.state === 'running') { const now = Tone.now(); treatMelodySynth.triggerAttackRelease("C6", "16n", now); treatMelodySynth.triggerAttackRelease("E6", "16n", now + 0.1); } }, reachHome: () => { if (mainSynth && Tone.context.state === 'running') { const now = Tone.now(); mainSynth.triggerAttackRelease("D5", "16n", now); mainSynth.triggerAttackRelease("F#5", "16n", now + 0.1); mainSynth.triggerAttackRelease("A5", "8n", now + 0.2); mainSynth.triggerAttackRelease("D6", "4n", now + 0.35); } }, buttonClick: () => { if (mainSynth && Tone.context.state === 'running') mainSynth.triggerAttackRelease("E4", "32n", Tone.now()); }, hop: () => { if (mainSynth && Tone.context.state === 'running') mainSynth.triggerAttackRelease("C5", "16n", Tone.now()); }
+        };
+
+        // --- Maze Generation ---
+        function generateMaze(size) {
+            // ... (Maze generation logic remains the same) ...
+             maze = Array(size).fill(null).map(() => Array(size).fill(null).map(() => ({ n: true, s: true, e: true, w: true, visited: false }))); let stack = []; player.x = 0; player.y = 0; player.visualX = player.x; player.visualY = player.y; home.x = size - 1; home.y = size - 1; let currentCell = { x: player.x, y: player.y }; maze[currentCell.y][currentCell.x].visited = true; stack.push(currentCell); while (stack.length > 0) { currentCell = stack.pop(); let neighbors = []; if (currentCell.y > 0 && !maze[currentCell.y - 1][currentCell.x].visited) neighbors.push({ x: currentCell.x, y: currentCell.y - 1, wall: 'n', opposite: 's' }); if (currentCell.y < size - 1 && !maze[currentCell.y + 1][currentCell.x].visited) neighbors.push({ x: currentCell.x, y: currentCell.y + 1, wall: 's', opposite: 'n' }); if (currentCell.x < size - 1 && !maze[currentCell.y][currentCell.x + 1].visited) neighbors.push({ x: currentCell.x + 1, y: currentCell.y, wall: 'e', opposite: 'w' }); if (currentCell.x > 0 && !maze[currentCell.y][currentCell.x - 1].visited) neighbors.push({ x: currentCell.x - 1, y: currentCell.y, wall: 'w', opposite: 'e' }); if (neighbors.length > 0) { stack.push(currentCell); let nextCell = neighbors[Math.floor(Math.random() * neighbors.length)]; maze[currentCell.y][currentCell.x][nextCell.wall] = false; maze[nextCell.y][nextCell.x][nextCell.opposite] = false; maze[nextCell.y][nextCell.x].visited = true; stack.push(nextCell); } } if (size === 1) { home.x = player.x; home.y = player.y; }
+        }
+
+        function placeTreats(numTreats) {
+            // ... (Treat placement logic remains the same) ...
+             treats = []; if (currentDifficulty.size <= 1) return; let placed = 0; let attempts = 0; while (placed < numTreats && attempts < currentDifficulty.size * currentDifficulty.size * 3) { let x = Math.floor(Math.random() * currentDifficulty.size); let y = Math.floor(Math.random() * currentDifficulty.size); if ((x !== player.x || y !== player.y) && (x !== home.x || y !== home.y) && !treats.some(t => t.x === x && t.y === y)) { treats.push({ x, y, collected: false }); placed++; } attempts++; }
+        }
+
+        // --- Drawing Logic ---
+        function drawGame(timestamp) {
+            // Only request next frame if playing or celebrating or hopping
+            if (currentGameState === GameState.PLAYING || isCelebrating || isHopping) {
+                requestAnimationFrame(drawGame);
+            }
+
+            // Ensure timestamp is valid
+             if (!lastFrameTime) {
+                 lastFrameTime = timestamp;
+             }
+            const deltaTime = (timestamp - lastFrameTime) / 1000;
+            lastFrameTime = timestamp;
+
+            // Only update player position if playing and not celebrating or hopping
+            if (currentGameState === GameState.PLAYING && !isCelebrating && !isHopping) {
+                updatePlayerVisualPosition(deltaTime);
+            }
+
+            if (mazeCanvas.width === 0 || mazeCanvas.height === 0) {
+                 return; // Don't draw if canvas has no size
+            }
+            const cellSize = mazeCanvas.width / currentDifficulty.size;
+            ctx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
+
+            // Draw Walls with Glow
+            ctx.strokeStyle = MAZE_WALL_COLOR;
+            ctx.lineWidth = Math.max(1, Math.floor(cellSize / 11));
+            ctx.lineCap = 'square'; // Ensure corners meet cleanly
+            if (ctx.lineWidth % 2 !== 0 && cellSize > 7) ctx.lineWidth +=1;
+            ctx.shadowColor = MAZE_WALL_GLOW;
+            ctx.shadowBlur = 5;
+            ctx.beginPath();
+            for (let y = 0; y < currentDifficulty.size; y++) {
+                for (let x = 0; x < currentDifficulty.size; x++) {
+                    const cellX = x * cellSize; const cellY = y * cellSize;
+                    if (maze[y][x].n) { ctx.moveTo(cellX, cellY); ctx.lineTo(cellX + cellSize, cellY); }
+                    if (maze[y][x].s) { ctx.moveTo(cellX, cellY + cellSize); ctx.lineTo(cellX + cellSize, cellY + cellSize); }
+                    if (maze[y][x].e) { ctx.moveTo(cellX + cellSize, cellY); ctx.lineTo(cellX + cellSize, cellY + cellSize); }
+                    if (maze[y][x].w) { ctx.moveTo(cellX, cellY); ctx.lineTo(cellX, cellY + cellSize); }
+                }
+            }
+            ctx.stroke();
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.lineCap = 'butt'; // Reset lineCap
+
+            // Draw Kawaii Fish Treats (Centered)
+            treats.forEach(treat => {
+                // ... (Fish drawing logic remains the same) ...
+                 if (!treat.collected) { ctx.fillStyle = '#ffb366'; const treatBaseSize = cellSize * 0.5; const cellCenterX = treat.x * cellSize + cellSize / 2; const cellCenterY = treat.y * cellSize + cellSize / 2; const fishBodyCenterX = cellCenterX + treatBaseSize * 0.15; const fishBodyCenterY = cellCenterY; const bodyRadiusX = treatBaseSize * 0.6; const bodyRadiusY = treatBaseSize * 0.4; ctx.beginPath(); ctx.ellipse(fishBodyCenterX, fishBodyCenterY, bodyRadiusX, bodyRadiusY, 0, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.moveTo(fishBodyCenterX - bodyRadiusX * 0.8, fishBodyCenterY); ctx.lineTo(fishBodyCenterX - bodyRadiusX * 1.5, fishBodyCenterY - bodyRadiusY * 0.8); ctx.lineTo(fishBodyCenterX - bodyRadiusX * 1.5, fishBodyCenterY + bodyRadiusY * 0.8); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#594c73'; ctx.beginPath(); ctx.arc(fishBodyCenterX + bodyRadiusX * 0.5, fishBodyCenterY - bodyRadiusY * 0.1, cellSize * 0.04, 0, Math.PI * 2); ctx.fill(); }
+            });
+
+            // Draw Home with Outline (Hybrid Approach)
+            const homeSize = cellSize * 0.8;
+            const hX = home.x * cellSize + (cellSize - homeSize) / 2;
+            const hY = home.y * cellSize + (cellSize - homeSize) / 2;
+            const roofHeight = homeSize * 0.35;
+            const bodyY = hY + roofHeight;
+            const bodyHeight = homeSize - roofHeight;
+            // 1. Draw Outline Layer
+            ctx.fillStyle = KITTY_OUTLINE_COLOR;
+            ctx.fillRect(hX - KITTY_OUTLINE_OFFSET, bodyY - KITTY_OUTLINE_OFFSET, homeSize + 2 * KITTY_OUTLINE_OFFSET, bodyHeight + 2 * KITTY_OUTLINE_OFFSET);
+            ctx.strokeStyle = KITTY_OUTLINE_COLOR; ctx.lineWidth = KITTY_OUTLINE_THICKNESS * 2; ctx.lineJoin = "round";
+            ctx.beginPath(); ctx.moveTo(hX, bodyY); ctx.lineTo(hX + homeSize / 2, hY); ctx.lineTo(hX + homeSize, bodyY); ctx.closePath(); ctx.stroke();
+            ctx.lineJoin = "miter";
+            // 2. Draw Actual House Layer
+            ctx.fillStyle = HOUSE_BODY_COLOR; ctx.fillRect(hX, bodyY, homeSize, bodyHeight);
+            ctx.fillStyle = HOUSE_ROOF_COLOR; ctx.beginPath(); ctx.moveTo(hX, bodyY); ctx.lineTo(hX + homeSize / 2, hY); ctx.lineTo(hX + homeSize, bodyY); ctx.closePath(); ctx.fill();
+            // 3. Draw Door and Windows (On Top)
+            if (cellSize > 15) {
+                ctx.fillStyle = HOUSE_DOOR_COLOR; const doorWidth = homeSize * 0.25; const doorHeight = homeSize * 0.4; ctx.fillRect(hX + (homeSize - doorWidth) / 2, bodyY + bodyHeight - doorHeight, doorWidth, doorHeight);
+                const windowRadius = homeSize * 0.1; const windowY = bodyY + bodyHeight * 0.2; const windowOffset = homeSize * 0.28; ctx.fillStyle = HOUSE_WINDOW_COLOR; ctx.strokeStyle = HOUSE_WINDOW_STROKE_COLOR; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.arc(hX + windowOffset, windowY, windowRadius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.arc(hX + homeSize - windowOffset, windowY, windowRadius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            }
+
+            // --- Draw Kawaii Pink Kitty (Outline Effect - Hybrid Approach) ---
+            const kSize = cellSize * 0.7;
+            const catBaseCenterX = player.visualX * cellSize + cellSize / 2;
+            let catBaseCenterY = player.visualY * cellSize + cellSize / 2; // Base Y position
+
+            // Apply Hop or Celebration Offset
+            let verticalOffset = 0;
+            if (isCelebrating) {
+                const elapsedCelebrationTime = (timestamp - celebrationStartTime) / 1000;
+                if (elapsedCelebrationTime < CELEBRATION_DURATION) {
+                    const hopPhase = elapsedCelebrationTime * CELEBRATION_HOP_FREQUENCY;
+                    verticalOffset = -Math.abs(Math.sin(hopPhase) * (kSize * CELEBRATION_HOP_AMPLITUDE));
+                } else {
+                    isCelebrating = false;
+                    switchScreen(GameState.END_SCREEN);
+                    return; // Exit draw loop
+                }
+            } else if (isHopping) {
+                const elapsedHopTime = (timestamp - hopStartTime) / 1000;
+                if (elapsedHopTime < HOP_DURATION) {
+                    const hopPhase = elapsedHopTime * HOP_FREQUENCY;
+                    verticalOffset = -Math.abs(Math.sin(hopPhase) * (kSize * HOP_AMPLITUDE));
+                } else {
+                    isHopping = false; // End hop
+                }
+            }
+            // Apply offset to the kitty's Y position
+            const catCenterY = catBaseCenterY + verticalOffset;
+
+
+            const headRadius = kSize * 0.35;
+            const bodyRadiusX = kSize * 0.3;
+            const bodyRadiusY = kSize * 0.2;
+            const headYOffset = kSize * 0.1;
+            const bodyYOffset = kSize * 0.25;
+            const earBaseYOffset = kSize * 0.25;
+            const earTipYOffset = kSize * 0.55;
+            const earOuterXOffset = kSize * 0.35;
+            const earInnerXOffset = kSize * 0.05;
+            const earTipXOffset = kSize * 0.2;
+
+            // 1. Draw Outline Layer for Head/Body (Filled, Slightly Larger)
+            ctx.fillStyle = KITTY_OUTLINE_COLOR;
+            ctx.beginPath(); ctx.arc(catBaseCenterX, catCenterY - headYOffset, headRadius + KITTY_OUTLINE_OFFSET, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(catBaseCenterX, catCenterY + bodyYOffset, bodyRadiusX + KITTY_OUTLINE_OFFSET, bodyRadiusY + KITTY_OUTLINE_OFFSET, 0, 0, Math.PI * 2); ctx.fill();
+
+            // 2. Draw Stroked Outline for Ears
+            ctx.strokeStyle = KITTY_OUTLINE_COLOR; ctx.lineWidth = KITTY_OUTLINE_THICKNESS; ctx.lineJoin = "round";
+            ctx.beginPath(); ctx.moveTo(catBaseCenterX - earOuterXOffset, catCenterY - earBaseYOffset); ctx.lineTo(catBaseCenterX - earTipXOffset, catCenterY - earTipYOffset); ctx.lineTo(catBaseCenterX - earInnerXOffset, catCenterY - earBaseYOffset); ctx.closePath(); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(catBaseCenterX + earOuterXOffset, catCenterY - earBaseYOffset); ctx.lineTo(catBaseCenterX + earTipXOffset, catCenterY - earTipYOffset); ctx.lineTo(catBaseCenterX + earInnerXOffset, catCenterY - earBaseYOffset); ctx.closePath(); ctx.stroke();
+            ctx.lineJoin = "miter";
+
+            // 3. Draw Pink Layer (Original Size)
+            ctx.fillStyle = KITTY_HEAD_COLOR;
+            ctx.beginPath(); ctx.arc(catBaseCenterX, catCenterY - headYOffset, headRadius, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(catBaseCenterX, catCenterY + bodyYOffset, bodyRadiusX, bodyRadiusY, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(catBaseCenterX - earOuterXOffset, catCenterY - earBaseYOffset); ctx.lineTo(catBaseCenterX - earTipXOffset, catCenterY - earTipYOffset); ctx.lineTo(catBaseCenterX - earInnerXOffset, catCenterY - earBaseYOffset); ctx.closePath(); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(catBaseCenterX + earOuterXOffset, catCenterY - earBaseYOffset); ctx.lineTo(catBaseCenterX + earTipXOffset, catCenterY - earTipYOffset); ctx.lineTo(catBaseCenterX + earInnerXOffset, catCenterY - earBaseYOffset); ctx.closePath(); ctx.fill();
+
+            // 4. Draw Eyes, Nose, and Mouth (On Top)
+            if (cellSize > 12) {
+                const eyeRadiusX = kSize * 0.12; const eyeRadiusY = kSize * 0.14;
+                const eyeOffsetX = kSize * 0.15; const eyeOffsetY = kSize * 0.1;
+                const pupilRadius = eyeRadiusX * 0.4; const pupilOffsetX = eyeRadiusX * 0.15; const pupilOffsetY = eyeRadiusY * 0.1;
+                const highlightRadius = pupilRadius * 0.3; const highlightOffsetX = pupilOffsetX * 0.8; const highlightOffsetY = -pupilOffsetY * 0.8;
+
+                // Left Eye
+                const leftEyeX = catBaseCenterX - eyeOffsetX; const leftEyeY = catCenterY - eyeOffsetY;
+                ctx.fillStyle = KITTY_EYE_WHITE_COLOR; ctx.beginPath(); ctx.ellipse(leftEyeX, leftEyeY, eyeRadiusX, eyeRadiusY, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = KITTY_EYE_PUPIL_COLOR; ctx.beginPath(); ctx.arc(leftEyeX + pupilOffsetX, leftEyeY + pupilOffsetY, pupilRadius, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = KITTY_EYE_WHITE_COLOR; ctx.beginPath(); ctx.arc(leftEyeX + pupilOffsetX + highlightOffsetX, leftEyeY + pupilOffsetY + highlightOffsetY, highlightRadius, 0, Math.PI * 2); ctx.fill();
+
+                // Right Eye
+                const rightEyeX = catBaseCenterX + eyeOffsetX; const rightEyeY = catCenterY - eyeOffsetY;
+                ctx.fillStyle = KITTY_EYE_WHITE_COLOR; ctx.beginPath(); ctx.ellipse(rightEyeX, rightEyeY, eyeRadiusX, eyeRadiusY, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = KITTY_EYE_PUPIL_COLOR; ctx.beginPath(); ctx.arc(rightEyeX + pupilOffsetX, rightEyeY + pupilOffsetY, pupilRadius, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = KITTY_EYE_WHITE_COLOR; ctx.beginPath(); ctx.arc(rightEyeX + pupilOffsetX + highlightOffsetX, rightEyeY + pupilOffsetY + highlightOffsetY, highlightRadius, 0, Math.PI * 2); ctx.fill();
+
+                 // Tiny nose (Pink)
+                ctx.fillStyle = KITTY_NOSE_COLOR;
+                ctx.beginPath(); ctx.arc(catBaseCenterX, catCenterY - kSize * 0.0, kSize * 0.05, 0, Math.PI * 2); ctx.fill();
+
+                // Draw Mouth Line
+                ctx.strokeStyle = KITTY_OUTLINE_COLOR; ctx.lineWidth = 1;
+                ctx.beginPath(); const mouthY = catCenterY + kSize * 0.08; const mouthWidth = kSize * 0.15; const mouthControlY = mouthY + kSize * 0.06; ctx.moveTo(catBaseCenterX - mouthWidth / 2, mouthY); ctx.quadraticCurveTo(catBaseCenterX, mouthControlY, catBaseCenterX + mouthWidth / 2, mouthY); ctx.stroke();
+            }
+
+        }
+
+        function resizeCanvas() {
+            // ... (Resize logic remains the same) ...
+             const gameArea = gameScreenContainer; if (!gameArea || gameArea.classList.contains('hidden')) { if (mazeCanvas.width === 0) mazeCanvas.width = 300; if (mazeCanvas.height === 0) mazeCanvas.height = 300; return; } const containerPadding = parseFloat(getComputedStyle(gameArea).paddingTop) + parseFloat(getComputedStyle(gameArea).paddingBottom); const infoHeight = document.getElementById('game-info').offsetHeight + 10; const controlsHeight = mobileControlsDiv.offsetHeight + 15; let availableWidth = gameArea.clientWidth - (parseFloat(getComputedStyle(gameArea).paddingLeft) + parseFloat(getComputedStyle(gameArea).paddingRight)); let availableHeight = gameArea.clientHeight - containerPadding - infoHeight - controlsHeight; availableWidth = Math.max(50, availableWidth); availableHeight = Math.max(50, availableHeight); const size = Math.min(availableWidth, availableHeight); let newCanvasSize = Math.floor(size / currentDifficulty.size) * currentDifficulty.size; newCanvasSize = Math.max(currentDifficulty.size * 10, newCanvasSize); if (mazeCanvas.width !== newCanvasSize || mazeCanvas.height !== newCanvasSize) { mazeCanvas.width = newCanvasSize; mazeCanvas.height = newCanvasSize; }
+        }
+
+        // --- Smooth Movement Logic ---
+        const PLAYER_MOVE_SPEED = 7;
+        function updatePlayerVisualPosition(deltaTime) {
+            // ... (Movement logic remains the same) ...
+             if (!player.isMoving) { if (player.visualX !== player.x || player.visualY !== player.y) { player.visualX = player.x; player.visualY = player.y; } return; } player.moveProgress += PLAYER_MOVE_SPEED * deltaTime; if (player.moveProgress >= 1) { player.moveProgress = 1; player.isMoving = false; player.x = player.targetX; player.y = player.targetY; player.visualX = player.x; player.visualY = player.y; checkPostMove(); } else { player.visualX = player.x + (player.targetX - player.x) * player.moveProgress; player.visualY = player.y + (player.targetY - player.y) * player.moveProgress; }
+        }
+
+        // UPDATED: attemptMove function
+        function attemptMove(dx, dy) {
+            // Prevent movement if celebrating, hopping, or already moving
+            if (isCelebrating || isHopping || player.isMoving || currentGameState !== GameState.PLAYING || !maze.length) return false;
+
+            const currentX = player.x;
+            const currentY = player.y;
+            const newX = currentX + dx;
+            const newY = currentY + dy;
+
+            // Boundary checks
+            if (newX < 0 || newX >= currentDifficulty.size || newY < 0 || newY >= currentDifficulty.size) return false;
+
+            // Wall checks based on current cell and direction
+            if (dx === 1 && maze[currentY][currentX].e) return false;
+            if (dx === -1 && maze[currentY][currentX].w) return false;
+            if (dy === 1 && maze[currentY][currentX].s) return false;
+            if (dy === -1 && maze[currentY][currentX].n) return false;
+
+            // If move is valid, set target and start moving
+            player.targetX = newX;
+            player.targetY = newY;
+            player.isMoving = true;
+            player.moveProgress = 0;
+            return true;
+        }
+
+        function checkPostMove() {
+            // Check for treat collection
+            const treatIndex = treats.findIndex(t => t.x === player.x && t.y === player.y && !t.collected);
+            if (treatIndex !== -1) {
+                treats[treatIndex].collected = true;
+                currentMazeScore++;
+                updateScoreDisplay();
+                sounds.treatCollect();
+            }
+            // Check for win condition only if not already celebrating or hopping
+            if (!isCelebrating && !isHopping && player.x === home.x && player.y === home.y) {
+                endGame(true); // Trigger win sequence
+            }
+        }
+
+
+        // --- Game Logic ---
+        function startGame(difficulty) {
+            initAudio();
+            sounds.gameStart();
+            currentDifficulty = difficulty;
+            currentMazeScore = 0;
+            isCelebrating = false; // Reset celebration state
+            isHopping = false; // Reset hop state
+            generateMaze(difficulty.size);
+            placeTreats(difficulty.treats);
+            updateScoreDisplay();
+            difficultyDisplay.textContent = `Difficulty: ${difficulty.name}`;
+            player.isMoving = false;
+            player.moveProgress = 0;
+
+            switchScreen(GameState.PLAYING);
+            setTimeout(() => {
+                resizeCanvas();
+                lastFrameTime = performance.now();
+                requestAnimationFrame(drawGame); // Start animation loop
+            }, 50);
+        }
+
+        // UPDATED: endGame function
+        function endGame(isWin) {
+            keyHeld = null;
+            if (keyRepeatTimeout) clearTimeout(keyRepeatTimeout);
+            player.isMoving = false; // Stop any visual movement immediately
+            isHopping = false; // Ensure hopping stops if win occurs mid-hop
+
+            if (isWin) {
+                sounds.reachHome();
+                currentMazeScore += currentDifficulty.bonus;
+                cumulativeSessionScore += currentMazeScore;
+                saveSessionScore();
+                endMessageDisplay.textContent = "Kitty is Home!";
+                isCelebrating = true; // Start celebrating!
+                celebrationStartTime = performance.now();
+                // Keep game state as PLAYING briefly so draw loop continues for animation
+                currentGameState = GameState.PLAYING; // Ensure state allows draw loop
+                // The drawGame loop will handle switching to END_SCREEN when celebration is done
+            } else {
+                endMessageDisplay.textContent = "Game Over!"; // Should not happen
+                switchScreen(GameState.END_SCREEN); // Switch immediately if not a win
+            }
+            finalMazeScoreDisplay.textContent = `Maze Score: ${currentMazeScore}`;
+            cumulativeScoreDisplay.textContent = `Total Session Score: ${cumulativeSessionScore}`;
+        }
+
+
+        // --- Input Handling ---
+        let keyHeld = null;
+        let keyRepeatTimeout = null;
+        const KEY_REPEAT_DELAY_INITIAL = 250;
+        const KEY_REPEAT_DELAY_INTERVAL = 150;
+        function processKeyInput(key) {
+            // Prevent input processing if celebrating or hopping
+            if (isCelebrating || isHopping) return;
+            // ... (rest of the function remains the same) ...
+             if (player.isMoving && player.moveProgress > 0.1) return; switch (key) { case 'ArrowUp': case 'w': attemptMove(0, -1); break; case 'ArrowDown': case 's': attemptMove(0, 1); break; case 'ArrowLeft': case 'a': attemptMove(-1, 0); break; case 'ArrowRight': case 'd': attemptMove(1, 0); break; }
+        }
+        // UPDATED: handleKeyDown function
+        function handleKeyDown(e) {
+            // Prevent input processing if celebrating or hopping
+            if (isCelebrating || isHopping) return;
+
+            if (!mainSynth && (e.key.startsWith('Arrow') || ['w','a','s','d', ' ', 'Spacebar'].includes(e.key))) {
+                 initAudio();
+             }
+
+            if (currentGameState !== GameState.PLAYING) return;
+
+            // Handle Space Bar for Hop
+            if (e.key === ' ' || e.key === 'Spacebar') {
+                e.preventDefault(); // Prevent space bar scrolling page
+                if (!player.isMoving && !isHopping) { // Can hop if not moving or already hopping
+                    isHopping = true;
+                    hopStartTime = performance.now();
+                    sounds.hop();
+                    requestAnimationFrame(drawGame); // Ensure animation loop starts if idle
+                }
+                return; // Don't process further for space bar
+            }
+
+            const relevantKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'];
+            if (!relevantKeys.includes(e.key)) return;
+            e.preventDefault(); // Prevent page scroll with arrow keys
+
+            if (keyHeld === e.key) return; // Already holding this key, repeat handled by timeout
+
+            keyHeld = e.key;
+            processKeyInput(keyHeld); // Process first press immediately
+
+            // Clear any existing repeat timeout and set a new one
+            if (keyRepeatTimeout) clearTimeout(keyRepeatTimeout);
+            keyRepeatTimeout = setTimeout(() => {
+                function repeat() {
+                    if (keyHeld === e.key && !isCelebrating && !isHopping) { // Check if still holding and not hopping/celebrating
+                        processKeyInput(keyHeld);
+                        keyRepeatTimeout = setTimeout(repeat, KEY_REPEAT_DELAY_INTERVAL);
+                    }
+                }
+                repeat(); // Start the repeating process
+            }, KEY_REPEAT_DELAY_INITIAL);
+        }
+        function handleKeyUp(e) {
+            // ... (Key up logic remains the same) ...
+             if (e.key === keyHeld) { keyHeld = null; if (keyRepeatTimeout) clearTimeout(keyRepeatTimeout); keyRepeatTimeout = null; }
+        }
+
+        function updateScoreDisplay() { scoreDisplay.textContent = `Score: ${currentMazeScore}`; }
+
+        function switchScreen(state) {
+            currentGameState = state; // Update state immediately
+            startScreenDiv.classList.add('hidden');
+            gameScreenContainer.classList.add('hidden');
+            endScreenDiv.classList.add('hidden');
+
+            if (state === GameState.START_SCREEN) startScreenDiv.classList.remove('hidden');
+            if (state === GameState.PLAYING) gameScreenContainer.classList.remove('hidden');
+            if (state === GameState.END_SCREEN) endScreenDiv.classList.remove('hidden'); // Show end screen
+        }
+
+        // --- Local Storage ---
+        function saveSessionScore() { try { localStorage.setItem('lostKittyMazeSessionScore', cumulativeSessionScore); } catch (e) { console.error("Failed to save score:", e); } }
+        function loadSessionScore() { try { const savedScore = localStorage.getItem('lostKittyMazeSessionScore'); if (savedScore) cumulativeSessionScore = parseInt(savedScore, 10) || 0; } catch (e) { console.error("Failed to load score:", e); cumulativeSessionScore = 0; } }
+
+        // --- UPDATED: Touch Event Handlers ---
+        function handleTouchStart(e) {
+            // Prevent default touch actions like scrolling
+            e.preventDefault();
+            // Ignore multi-touch or if celebrating/hopping
+            if (e.touches.length > 1 || isCelebrating || isHopping) {
+                touchStartX = null;
+                touchStartY = null;
+                return;
+            }
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+
+        function handleTouchMove(e) {
+            // Prevent scrolling while dragging finger on canvas
+            e.preventDefault();
+        }
+
+        // UPDATED: handleTouchEnd function
+        function handleTouchEnd(e) {
+            // Prevent actions if celebrating, hopping, or no start recorded
+            if (isCelebrating || isHopping || touchStartX === null || touchStartY === null) {
+                return;
+            }
+            // Ignore multi-touch release
+            if (e.changedTouches.length > 1) {
+                touchStartX = null;
+                touchStartY = null;
+                return;
+            }
+
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+
+            const absDeltaX = Math.abs(deltaX);
+            const absDeltaY = Math.abs(deltaY);
+
+            // Check if it's a swipe (significant movement in one direction)
+            if (Math.max(absDeltaX, absDeltaY) > MIN_SWIPE_DISTANCE) {
+                 if (!mainSynth) initAudio(); // Initialize audio on first action
+                if (absDeltaX > absDeltaY) {
+                    // Horizontal swipe
+                    attemptMove(deltaX > 0 ? 1 : -1, 0);
+                } else {
+                    // Vertical swipe
+                    attemptMove(0, deltaY > 0 ? 1 : -1);
+                }
+            } else {
+                // Treat as Tap for Hop
+                if (!mainSynth) initAudio(); // Initialize audio on first action
+                if (!player.isMoving && !isHopping) { // Can hop if not moving or already hopping
+                    isHopping = true;
+                    hopStartTime = performance.now();
+                    sounds.hop();
+                    requestAnimationFrame(drawGame); // Ensure animation loop starts if idle
+                }
+            }
+
+            // Reset touch start coordinates
+            touchStartX = null;
+            touchStartY = null;
+        }
+
+
+        // --- Event Listeners Setup ---
+        function addClickListener(id, callback) {
+            // ... (Click listener setup remains the same) ...
+             const element = document.getElementById(id); if (element) { element.addEventListener('click', () => { initAudio(); sounds.buttonClick(); callback(); }); } else { console.warn(`Element with ID "${id}" not found.`); }
+        }
+        addClickListener('easy-btn', () => startGame(Difficulty.EASY)); addClickListener('medium-btn', () => startGame(Difficulty.MEDIUM)); addClickListener('hard-btn', () => startGame(Difficulty.HARD));
+        addClickListener('easy-btn-end', () => startGame(Difficulty.EASY)); addClickListener('medium-btn-end', () => startGame(Difficulty.MEDIUM)); addClickListener('hard-btn-end', () => startGame(Difficulty.HARD));
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+
+        function setupMobileButton(id, key) {
+            // Prevent input processing if celebrating or hopping
+            const button = document.getElementById(id); if (!button) return; let pressInterval = null; let pressTimeout = null;
+            button.addEventListener('pointerdown', (e) => {
+                if (isCelebrating || isHopping) return; // Block input during celebration/hop
+                e.preventDefault(); button.releasePointerCapture(e.pointerId); initAudio(); processKeyInput(key); if (pressTimeout) clearTimeout(pressTimeout); if (pressInterval) clearInterval(pressInterval); pressTimeout = setTimeout(() => { pressInterval = setInterval(() => { if (!isCelebrating && !isHopping) processKeyInput(key); }, KEY_REPEAT_DELAY_INTERVAL); }, KEY_REPEAT_DELAY_INITIAL);
+            });
+            const clearMobilePress = (e) => { if (pressTimeout) clearTimeout(pressTimeout); if (pressInterval) clearInterval(pressInterval); pressTimeout = null; pressInterval = null; };
+            button.addEventListener('pointerup', clearMobilePress); button.addEventListener('pointerleave', clearMobilePress); button.addEventListener('contextmenu', (e) => e.preventDefault());
+        }
+        setupMobileButton('up-btn', 'ArrowUp'); setupMobileButton('down-btn', 'ArrowDown'); setupMobileButton('left-btn', 'ArrowLeft'); setupMobileButton('right-btn', 'ArrowRight');
+
+        // Add Touch Event Listeners to Game Container
+        gameScreenContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+        gameScreenContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+        gameScreenContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 100); });
+
+        // --- Initial Setup ---
+        loadSessionScore();
+        switchScreen(GameState.START_SCREEN);
+        // Update the end screen text initially if needed (though it's hidden)
+        if (playAgainText) {
+             playAgainText.textContent = "Rescue Pink Kitty again?";
+        }
+        setTimeout(resizeCanvas, 0);
+
+        // --- PWA Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js') // Use absolute path
+              .then(registration => {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+              })
+              .catch(error => {
+                console.log('ServiceWorker registration failed: ', error);
+              });
+          });
+        }
+
+    </script>
+</body>
+</html>
+
