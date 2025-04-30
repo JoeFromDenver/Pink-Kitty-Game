@@ -6,9 +6,9 @@ A simple and cute maze game created for a special friend! Help Pink Kitty naviga
 
 This is a web-based maze game built with HTML, CSS, and vanilla JavaScript. It features procedurally generated mazes, scoring, touch controls (swipe and tap-to-hop), and sound effects using Tone.js. The game is designed with a kawaii vaporwave aesthetic and is installable as a Progressive Web App (PWA).
 
-This project was created as a fun gift for a friend whose favorite toy is named Pink Kitty. [Play it here](https://joefromdenver.github.io/Pink-Kitty-Game/)
+This project was created as a fun gift for a friend whose favorite toy is named Pink Kitty. <a href="https://joefromdenver.github.io/Pink-Kitty-Game/" target="_blank" rel="noopener noreferrer">Play it here</a>
 
-*This game was vibe coded with love using [Gemini 2.5 Pro with Canvas](https://gemini.google.com/canvas).*
+*This game was vibe coded with love using <a href="https://gemini.google.com/canvas)" target="_blank" rel="noopener noreferrer">Gemini 2.5 Pro with Canvas</a>*
 
 ## Features
 
