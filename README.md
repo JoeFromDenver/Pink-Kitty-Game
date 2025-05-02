@@ -1,4 +1,4 @@
-# Pink Kitty Maze 🐱💖🐶
+# Pink Kitty Game 🐱💖🐶
 
 A simple maze game created for a special friend! Help Pink Kitty navigate the maze, collect fishy treats, and get back home to Puppy.
 
