@@ -6,7 +6,8 @@ A simple maze game created for a special friend! Help Pink Kitty navigate the ma
 
 This is a web-based maze game built with HTML, CSS, and vanilla JavaScript. It features procedurally generated mazes, scoring, touch controls (swipe and tap-to-hop), and sound effects using Tone.js. The game is designed with a kawaii vaporwave aesthetic and is installable as a Progressive Web App (PWA).
 
-This project was created as a birthday gift for a friend whose favorite toy is named Pink Kitty. <a href="https://joefromdenver.github.io/Pink-Kitty-Game/" target="_blank" rel="noopener noreferrer">Play it here</a>
+This project was created as a birthday gift for a friend whose favorite toy is named Pink Kitty.    
+<a href="https://joefromdenver.github.io/Pink-Kitty-Game/" target="_blank" rel="noopener noreferrer">Play it here in your web browser</a>
 
 *Vibe coded with love using <a href="https://gemini.google.com/canvas" target="_blank" rel="noopener noreferrer">Gemini 2.5 Pro with Canvas</a>*
 
@@ -34,25 +35,19 @@ This project was created as a birthday gift for a friend whose favorite toy is n
 5.  Tap the screen or press the Space Bar to make Pink Kitty hop!
 6.  Try to beat your score!
 
-## Deployment
-
-This game is deployed using GitHub Pages. You can play it online at:
-
-<a href="https://joefromdenver.github.io/Pink-Kitty-Game/" target="_blank" rel="noopener noreferrer">joefromdenver.github.io/Pink-Kitty-Game/</a>
-
 ## Installation (PWA)
 
-You can install Pink Kitty Maze like an app on your phone or computer for easy access and offline play!
+You can install Pink Kitty Game like an app on your phone or computer for easy access and offline play!
 
 **Chrome:**
 
-1.  Navigate to the game link: [joefromdenver.github.io/Pink-Kitty-Game/](https://joefromdenver.github.io/Pink-Kitty-Game/)
-2.  Look for an **Install** icon in the address bar (usually looks like a computer screen with a down arrow) or a prompt like "**Add Pink Kitty Maze to Home screen**".
+1.  [Open to the game link](https://joefromdenver.github.io/Pink-Kitty-Game/)
+2.  Look for an **Install** icon in the address bar (usually looks like a computer screen with a down arrow) or a prompt like "**Add Pink Kitty Game to Home screen**".
 3.  Click/tap the Install button or prompt and follow the on-screen instructions.
 
 **Safari:**
 
-1.  Open the game link in Safari: [joefromdenver.github.io/Pink-Kitty-Game/](https://joefromdenver.github.io/Pink-Kitty-Game/)
+1.  [Open to the game link](https://joefromdenver.github.io/Pink-Kitty-Game/)
 2.  Tap the **Share** button (the square icon with an arrow pointing up).
 3.  Scroll down in the share menu and tap **"Add to Home Screen"**.
 4.  Confirm the name and tap **"Add"**.
