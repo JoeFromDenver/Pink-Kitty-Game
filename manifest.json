@@ -1,6 +1,6 @@
 {
   "name": "Pink Kitty Maze",
-  "short_name": "KittyMaze",
+  "short_name": "Pink Kitty",
   "description": "Help Pink Kitty find the way home through the maze!",
   "start_url": ".",
   "display": "standalone",
